@@ -1,8 +1,9 @@
+// UserID.java
+// CPSC 3620 Assignment 4
+// Dr. Linh Ngo
+// William Beasley
 
-//      qsub -I
-//      chmod 755 runMR.sh 
-//      ./runMR.sh MapReduce /newscratch/lngo/dataset/rating/ out
-
+// Calculates the user with the most ratings and on which genre
 
 
 import java.io.BufferedReader;
@@ -26,16 +27,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-//import java.util.HashMap;
-
-/* Main Problem with this program
- * The values from the Mapper are not being passed to the Reducer
- */
 
 public class UserID{
 	public static class Map extends Mapper<LongWritable ,Text, Text, Text>{
 		
-//		private HashMap<Integer, String> matchMap = new HashMap<Integer, String>();
 		
 		@Override
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
@@ -48,26 +43,6 @@ public class UserID{
 			
 			context.write(new Text(userid+""), new Text(movieid));			
 		}
-		
-/*		@Override
-		protected void setup(Context context) throws IOException, InterruptedException{
-			Configuration conf = context.getConfiguration();
-			String param = conf.get("matchfile");
-			InputStream is = new FileInputStream(param);
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader br = new BufferedReader(isr);
-			
-
-			String line = null;
-			while((line = br.readLine()) != null){
-				String[] splitter = line.split("::");
-				Integer temp = new Integer(Integer.parseInt(splitter[0]));
-				matchMap.put(temp, splitter[2]);
-			}
-			is.close();
-			isr.close();
-			br.close();	
-		}*/
 	}
 	
 	public static class Reduce extends Reducer<Text, Text, Text, Text>{
@@ -75,6 +50,7 @@ public class UserID{
 		private HashMap<Integer, String> matchMap = new HashMap<Integer, String>();
 		String maxUsrID = null;
 		String maxUsrGenre = null;
+		int numReviews = 0;
 		int maxRates = 0;
 		
 		@Override
@@ -87,7 +63,6 @@ public class UserID{
 			Integer numNew = null;
 			
 			for(Text val: values){
-				/* get movie id and pick out most popular genre then pick user with highest rating */
 				String curVal = val.toString();
 				genre = matchMap.get(Integer.parseInt(curVal));
 
@@ -120,7 +95,9 @@ public class UserID{
 				maxUsrID = usrID;
 				maxUsrGenre = maxGenre;
 				maxRates = totalRatings;			
+				numReviews = totalRatings;
 			}
+			
 		}
 
 		@Override
@@ -142,37 +119,37 @@ public class UserID{
 			isr.close();
 			br.close();
 		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			String outR = "-- Total Rating Counts: " + (maxRates-1) +  " -- Most Rated Genre: " + maxUsrGenre + " - " + numReviews;
+			
+			context.write(new Text(maxUsrID), new Text(outR));
+		}
 
 	}
 	
 	public static void main(String[] args) throws Exception{
 		
-		
-		/* movies.dat could be replaced by an args[x] is necessary */
         Configuration conf = new Configuration();
         conf.set("matchfile", "./movies.dat");
-
-        /* creates new job from configuration */
+        
         Job job = new Job(conf, "MapReduce");
         job.setJarByClass(UserID.class);
-        
-        /* defines the outputs from the Mapper */
+
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
 
-        /* defines the outputs from the Job */
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
-        /* defines the Mapper and Reduce classes */
+
         job.setMapperClass(Map.class);
         job.setReducerClass(Reduce.class);
-
-        /* defines the input and output formats for the Job */
+        
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
-        /* defines the input and output files for the job */
         for(int i = 0; i < 10; ++i){
         	FileInputFormat.addInputPath(job, new Path("x00"+i));
         }
