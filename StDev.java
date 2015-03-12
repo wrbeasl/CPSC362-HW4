@@ -1,8 +1,11 @@
 
-//      qsub -I
-//      chmod 755 runMR.sh 
-//      ./runMR.sh MapReduce /newscratch/lngo/dataset/rating/ out
 
+// Mean.java
+// CPSC 3620 Assignment 4
+// Dr. Linh Ngo
+// William Beasley
+
+// Calculates the standard deviation of the genre ratings from movies.dat and x00[0-9]
 
 
 import org.apache.hadoop.fs.Path;
@@ -146,7 +149,7 @@ public class StDev {
 			else{
 				float total = rateMap.get(curgenre)[3].floatValue();
 				float div = total / (rateMap.get(curgenre)[1] - 1);
-				std = (float)Math.sqrt((double)div);
+				std = (float)Math.sqrt(div);
 
 			}
 			context.write(key, new FloatWritable(std));
@@ -180,7 +183,10 @@ public class StDev {
         job.setOutputFormatClass(TextOutputFormat.class);
 
         /* defines the input and output files for the job */
-        FileInputFormat.addInputPath(job, new Path("x000"));
+        for(int i = 0; i < 10; ++i){
+        	FileInputFormat.addInputPath(job, new Path("x00"+i));
+        }
+        FileInputFormat.addInputPath(job, new Path("x010"));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.waitForCompletion(true);

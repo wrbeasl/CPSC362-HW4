@@ -1,8 +1,10 @@
 
-//      qsub -I
-//      chmod 755 runMR.sh 
-//      ./runMR.sh MapReduce /newscratch/lngo/dataset/rating/ out
+// Mean.java
+// CPSC 3620 Assignment 4
+// Dr. Linh Ngo
+// William Beasley
 
+// Calculates the median of the genre ratings from movies.dat and x00[0-9]
 
 
 import org.apache.hadoop.fs.Path;
@@ -144,7 +146,10 @@ public class Median {
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
-        FileInputFormat.addInputPath(job, new Path("x000"));
+        for(int i = 0; i < 10; ++i){
+        	FileInputFormat.addInputPath(job, new Path("x00"+i));
+        }
+        FileInputFormat.addInputPath(job, new Path("x010"));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.waitForCompletion(true);

@@ -1,7 +1,9 @@
+// Mean.java
+// CPSC 3620 Assignment 4
+// Dr. Linh Ngo
+// William Beasley
 
-//      qsub -I
-//      chmod 755 runMR.sh 
-//      ./runMR.sh Mean /newscratch/lngo/dataset/rating/ out
+// Calculates the mean of genre ratings from movies.dat and x0[1-9]
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.*;
@@ -132,7 +134,9 @@ public class Mean {
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
-        FileInputFormat.addInputPath(job, new Path("x000"));
+        for(int i = 0; i < 10; ++i){
+        	FileInputFormat.addInputPath(job, new Path("x00"+i));
+        }
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.waitForCompletion(true);

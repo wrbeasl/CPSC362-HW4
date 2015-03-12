@@ -5,16 +5,28 @@
 
 
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.conf.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import java.util.*;
-import java.io.*;
+//import java.util.HashMap;
 
 /* Main Problem with this program
  * The values from the Mapper are not being passed to the Reducer
@@ -33,7 +45,8 @@ public class UserID{
 						
 			int userid = Integer.parseInt(columnValues[0]);
 			String movieid = columnValues[1];
-			context.write(new Text(userid), new Text(movieid));			
+			
+			context.write(new Text(userid+""), new Text(movieid));			
 		}
 		
 /*		@Override
@@ -94,10 +107,12 @@ public class UserID{
 			String maxGenre = genre;
 			int maxRatings = numRatings.get(genre).intValue();
 			while(it.hasNext()){
-				Map.Entry pairs = (Map.Entry)it.next();
-				if(pairs.getValue().intValue > maxRatings){
-					maxGenre = pairs.getKey();
-					maxRatings = pairs.getValue().intValue();
+				Entry thisIt = (Entry) it.next();
+				Object key2 = thisIt.getKey();
+				Object value = thisIt.getValue();
+				if((int) value > maxRatings){
+					maxGenre = (String) key2;
+					maxRatings = (int) value;
 				}
 			}
 
@@ -132,6 +147,7 @@ public class UserID{
 	
 	public static void main(String[] args) throws Exception{
 		
+		
 		/* movies.dat could be replaced by an args[x] is necessary */
         Configuration conf = new Configuration();
         conf.set("matchfile", "./movies.dat");
@@ -142,11 +158,11 @@ public class UserID{
         
         /* defines the outputs from the Mapper */
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(FloatWritable.class);
+        job.setMapOutputValueClass(Text.class);
 
         /* defines the outputs from the Job */
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(FloatWritable.class);
+        job.setOutputValueClass(Text.class);
 
         /* defines the Mapper and Reduce classes */
         job.setMapperClass(Map.class);
@@ -157,7 +173,10 @@ public class UserID{
         job.setOutputFormatClass(TextOutputFormat.class);
 
         /* defines the input and output files for the job */
-        FileInputFormat.addInputPath(job, new Path("x000"));
+        for(int i = 0; i < 10; ++i){
+        	FileInputFormat.addInputPath(job, new Path("x00"+i));
+        }
+        FileInputFormat.addInputPath(job, new Path("x010"));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.waitForCompletion(true);
